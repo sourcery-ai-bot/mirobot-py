@@ -10,9 +10,9 @@ with Mirobot(wait=True, debug=True, connection_type='bt') as m:
     # print our dataclass maintained by Mirobot. Shows the x,y,z,a,b,c coordinates.
     print(m.cartesian)
 
+    mx = 180.00
     # increment arm's position using a for-loop
     for count in range(5):
-        mx = 180.00
         my = 0.00 + count * 5
         mz = 170 + count * 5
 

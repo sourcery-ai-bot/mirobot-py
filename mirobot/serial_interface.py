@@ -145,24 +145,20 @@ class SerialInterface:
         device_name : str
             The name of the device that is (most-likely) connected to the Mirobot.
         """
-        port_objects = lp.comports()
-
-        if not port_objects:
-            self.logger.exception(MirobotAmbiguousPort("No ports found! Make sure your Mirobot is connected and recognized by your operating system."))
-
-        else:
+        if port_objects := lp.comports():
             for p in port_objects:
-                if os_is_posix:
-                    try:
-                        open(p.device)
-                    except Exception:
-                        continue
-                    else:
-                        return p.device
-                else:
+                if not os_is_posix:
                     return p.device
 
+                try:
+                    open(p.device)
+                except Exception:
+                    continue
+                else:
+                    return p.device
             self.logger.exception(MirobotAmbiguousPort("No open ports found! Make sure your Mirobot is connected and is not being used by another process."))
+        else:
+            self.logger.exception(MirobotAmbiguousPort("No ports found! Make sure your Mirobot is connected and recognized by your operating system."))
 
     def wait_for_ok(self, reset_expected=False, disable_debug=False):
         """
@@ -193,16 +189,8 @@ class SerialInterface:
                     return True
             return False
 
-        if reset_expected:
-            eols = ok_eols + reset_strings
-        else:
-            eols = ok_eols
-
-        if os_is_nt and not reset_expected:
-            eol_threshold = 2
-        else:
-            eol_threshold = 1
-
+        eols = ok_eols + reset_strings if reset_expected else ok_eols
+        eol_threshold = 2 if os_is_nt and not reset_expected else 1
         eol_counter = 0
         while eol_counter < eol_threshold:
             msg = self.serial_device.listen_to_device()

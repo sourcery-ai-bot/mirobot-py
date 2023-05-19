@@ -99,22 +99,23 @@ class SerialDevice:
 
     def open(self):
         """ Open the serial port. """
-        if not self._is_open:
-            # serialport = 'portname', baudrate, bytesize = 8, parity = 'N', stopbits = 1, timeout = None, xonxoff = 0, rtscts = 0)
-            self.serialport.port = self.portname
-            self.serialport.baudrate = self.baudrate
-            self.serialport.stopbits = self.stopbits
+        if self._is_open:
+            return
+        # serialport = 'portname', baudrate, bytesize = 8, parity = 'N', stopbits = 1, timeout = None, xonxoff = 0, rtscts = 0)
+        self.serialport.port = self.portname
+        self.serialport.baudrate = self.baudrate
+        self.serialport.stopbits = self.stopbits
 
-            try:
-                self.logger.debug(f"Attempting to open serial port {self.portname}")
+        try:
+            self.logger.debug(f"Attempting to open serial port {self.portname}")
 
-                self.serialport.open()
-                self._is_open = True
+            self.serialport.open()
+            self._is_open = True
 
-                self.logger.debug(f"Succeeded in opening serial port {self.portname}")
+            self.logger.debug(f"Succeeded in opening serial port {self.portname}")
 
-            except Exception as e:
-                self.logger.exception(SerialDeviceOpenError(e))
+        except Exception as e:
+            self.logger.exception(SerialDeviceOpenError(e))
 
     def close(self):
         """ Close the serial port. """

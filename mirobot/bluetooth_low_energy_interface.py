@@ -70,16 +70,15 @@ class BluetoothLowEnergyInterface:
     async def _ainit(self, address=None, autofindaddress=True):
         # if address was not passed in and autofindaddress is set to true,
         # then autosearch for a bluetooth device
-        if not address:
-            if autofindaddress:
-                self.address = await self._find_address()
-                """ The default address to use when making connections. To override this on a individual basis, provide portname to each invocation of `BaseMirobot.connect`. """
-                self.logger.info(f"Using Bluetooth Address \"{self.address}\"")
-            else:
-                self.logger.exception(InvalidBluetoothAddressError('Must either provide a Bluetooth address or turn on autodiscovery!'))
-        else:
+        if address:
             self.address = address
 
+        elif autofindaddress:
+            self.address = await self._find_address()
+            """ The default address to use when making connections. To override this on a individual basis, provide portname to each invocation of `BaseMirobot.connect`. """
+            self.logger.info(f"Using Bluetooth Address \"{self.address}\"")
+        else:
+            self.logger.exception(InvalidBluetoothAddressError('Must either provide a Bluetooth address or turn on autodiscovery!'))
         self.client = BleakClient(self.address, loop=self.loop)
 
     def _run_and_get(self, coro):
@@ -136,9 +135,6 @@ class BluetoothLowEnergyInterface:
                     return await self._bus.callRemote(
                 AttributeError: 'NoneType' object has no attribute 'callRemote'
                 '''
-                # don\t know why it happens, it shouldn't and doesn't in normal async flow
-                # but if it complains that client._bus is None, then we're good, right...?
-                pass
 
         self._run_and_get(async_disconnect())
 

@@ -24,11 +24,7 @@ class featured_dataclass(basic_dataclass):
         for f in self.fields():
             this_value = getattr(self, f.name)
 
-            if single:
-                other_value = other
-            else:
-                other_value = getattr(other, f.name)
-
+            other_value = other if single else getattr(other, f.name)
             result = operation_function(this_value, other_value)
 
             new_values[f.name] = result
@@ -62,10 +58,7 @@ class featured_dataclass(basic_dataclass):
     def _basic_unary_operation(self, operation):
         def operation_function(field):
             value = getattr(self, field.name)
-            if value is not None:
-                return operation(value)
-            else:
-                return None
+            return operation(value) if value is not None else None
 
         return self._unary_operation(operation_function)
 
@@ -96,20 +89,14 @@ class featured_dataclass(basic_dataclass):
 
     def __or__(self, other):
         def operation_function(this_value, other_value):
-            if this_value is None:
-                return other_value
-            else:
-                return this_value
+            return other_value if this_value is None else this_value
 
         new_values = self._cross_same_type(other, operation_function)
         return self._new_from_dict(new_values)
 
     def __and__(self, other):
         def operation_function(this_value, other_value):
-            if None not in (this_value, other_value):
-                return this_value
-            else:
-                return None
+            return this_value if None not in (this_value, other_value) else None
 
         new_values = self._cross_same_type(other, operation_function)
         return self._new_from_dict(new_values)
@@ -117,20 +104,14 @@ class featured_dataclass(basic_dataclass):
     def int(self):
         def operation_function(field):
             value = getattr(self, field.name)
-            if field.type in (float,) and value is not None:
-                return int(value)
-            else:
-                return value
+            return int(value) if field.type in (float,) and value is not None else value
 
         return self._unary_operation(operation_function)
 
     def round(self):
         def operation_function(field):
             value = getattr(self, field.name)
-            if field.type in (float,) and value is not None:
-                return round(value)
-            else:
-                return value
+            return round(value) if field.type in (float,) and value is not None else value
 
         return self._unary_operation(operation_function)
 

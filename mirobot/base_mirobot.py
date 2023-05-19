@@ -65,7 +65,7 @@ class BaseMirobot(AbstractContextManager):
         self.stream_handler = ExitOnExceptionStreamHandler()
         self.stream_handler.setLevel(logging.DEBUG if debug else logging.INFO)
 
-        formatter = logging.Formatter(f"[Mirobot Init] [%(levelname)s] %(message)s")
+        formatter = logging.Formatter("[Mirobot Init] [%(levelname)s] %(message)s")
         self.stream_handler.setFormatter(formatter)
         self.logger.addHandler(self.stream_handler)
 
@@ -75,9 +75,7 @@ class BaseMirobot(AbstractContextManager):
         if connection_type.lower() in ('serial', 'ser'):
             serial_device_init_fn = SerialInterface.__init__
             args_names = serial_device_init_fn.__code__.co_varnames[:serial_device_init_fn.__code__.co_argcount]
-            args_dict = dict(zip(args_names, device_args))
-            args_dict.update(device_kwargs)
-
+            args_dict = dict(zip(args_names, device_args)) | device_kwargs
             args_dict['mirobot'] = self
             args_dict['exclusive'] = exclusive
             args_dict['debug'] = debug
@@ -90,9 +88,7 @@ class BaseMirobot(AbstractContextManager):
         elif connection_type.lower() in ('bluetooth', 'bt'):
             bluetooth_device_init_fn = BluetoothLowEnergyInterface.__init__
             args_names = bluetooth_device_init_fn.__code__.co_varnames[:bluetooth_device_init_fn.__code__.co_argcount]
-            args_dict = dict(zip(args_names, device_args))
-            args_dict.update(device_kwargs)
-
+            args_dict = dict(zip(args_names, device_args)) | device_kwargs
             args_dict['mirobot'] = self
             args_dict['debug'] = debug
             args_dict['logger'] = self.logger
@@ -205,17 +201,19 @@ class BaseMirobot(AbstractContextManager):
 
             # check if this is supposed to be a variable command and fail if not
             if var_command and not re.fullmatch(r'\$\d+=[\d\.]+', msg):
-                self.logger.exception(MirobotVariableCommandError("Message is not a variable command: " + msg))
+                self.logger.exception(
+                    MirobotVariableCommandError(
+                        f"Message is not a variable command: {msg}"
+                    )
+                )
 
-            # actually send the message
-            output = self.device.send(msg,
-                                      disable_debug=disable_debug,
-                                      terminator=os.linesep,
-                                      wait=(wait or (wait is None and self.wait)),
-                                      wait_idle=wait_idle)
-
-            return output
-
+            return self.device.send(
+                msg,
+                disable_debug=disable_debug,
+                terminator=os.linesep,
+                wait=(wait or (wait is None and self.wait)),
+                wait_idle=wait_idle,
+            )
         else:
             raise Exception('Mirobot is not Connected!')
 
@@ -283,9 +281,7 @@ class BaseMirobot(AbstractContextManager):
 
         state_regex = r'<([^,]*),Angle\(ABCDXYZ\):([-\.\d,]*),Cartesian coordinate\(XYZ RxRyRz\):([-.\d,]*),Pump PWM:(\d+),Valve PWM:(\d+),Motion_MODE:(\d)>'
 
-        regex_match = re.fullmatch(state_regex, msg)
-
-        if regex_match:
+        if regex_match := re.fullmatch(state_regex, msg):
             try:
                 state, angles, cartesians, pump_pwm, valve_pwm, motion_mode = regex_match.groups()
 
